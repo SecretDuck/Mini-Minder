@@ -13,7 +13,7 @@
         android:id="@+id/bottom_sheet_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/material_dynamic_primary50"
+        android:background="@color/cardview_shadow_start_color"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -23,11 +23,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="3"
-            android:fontFamily="serif"
+            android:fontFamily="sans-serif-light"
             android:padding="24dp"
             android:textSize="18sp"
-            android:text="Welcome Back. Please Login"
-            android:textColor="@android:color/white" />
+            android:text="Actions"
+            android:textColor="@android:color/black" />
 
         <ImageView
             android:id="@+id/bottom_sheet_arrow"
@@ -38,91 +38,93 @@
             app:srcCompat="@drawable/ic_baseline_keyboard_arrow_up_24" />
     </LinearLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:background="@color/material_dynamic_tertiary20"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:filterTouchesWhenObscured="false"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/viewCurrLinearLayout"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="serif"
-                android:gravity="center_horizontal"
-                android:text="login"
-                android:textSize="36sp" />
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_search"
+            android:layout_margin="8dp"/>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:orientation="horizontal"
-                android:padding="10dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="View current geofences"
+            android:layout_gravity="center_vertical"
+            android:padding="8dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textColor= "@color/material_dynamic_neutral50"
-                    android:fontFamily="serif"
-                    android:text="username"
-                    android:textSize="24sp" />
+    </LinearLayout>
 
-                <EditText
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ems="10"
-                    android:fontFamily="serif"
-                    android:hint="enter_email_address"
-                    android:inputType="textEmailAddress" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/addNewGeofLinearLayout"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp">
 
-            </LinearLayout>
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_add"
+            android:layout_margin="8dp"/>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="10dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add new geofence"
+            android:layout_gravity="center_vertical"
+            android:padding="8dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textColor= "@color/material_dynamic_primary50"
-                    android:fontFamily="serif"
-                    android:text="password"
-                    android:textSize="24sp" />
+    </LinearLayout>
 
-                <EditText
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ems="10"
-                    android:fontFamily="serif"
-                    android:hint="enter_password"
-                    android:inputType="textPassword" />
-            </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/viewLocLogsLinearLayout"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp">
 
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="50dp"
-                android:fontFamily="serif"
-                android:text="login"
-                android:backgroundTint="@color/material_dynamic_neutral50"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp" />
-        </LinearLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_menu"
+            android:layout_margin="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="View location logs"
+            android:layout_gravity="center_vertical"
+            android:padding="8dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/manageChildrensProf"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_profile"
+            android:layout_margin="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Manage children's profiles"
+            android:layout_gravity="center_vertical"
+            android:padding="8dp"/>
+    </LinearLayout>
 </LinearLayout>

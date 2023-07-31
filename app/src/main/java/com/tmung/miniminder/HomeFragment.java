@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,9 +23,7 @@ public class HomeFragment extends Fragment {
     private BottomSheetBehavior sheetBehavior;
     private ImageView header_arrow_image;
 
-    Button btn_addNewGeofence;
     Button btn_viewActiveGeofences;
-    Button btn_viewLocationLogs;
 
     @Nullable
     @Override
@@ -74,6 +73,37 @@ public class HomeFragment extends Fragment {
             @Override
             public void onSlide(@NonNull View bottomSheet, float slideOffset) {
                 header_arrow_image.setRotation(slideOffset * 180);
+            }
+        });
+
+        LinearLayout viewCurrLL = mBottomSheetLayout.findViewById(R.id.viewCurrLinearLayout);
+        LinearLayout addNewGeofLL = mBottomSheetLayout.findViewById(R.id.addNewGeofLinearLayout);
+        LinearLayout viewLocLogsLL = mBottomSheetLayout.findViewById(R.id.viewLocLogsLinearLayout);
+        LinearLayout manageChildrensProfLL = mBottomSheetLayout.findViewById(R.id.manageChildrensProf);
+
+        viewCurrLL.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getActivity(), "Will show current geofences on map", Toast.LENGTH_SHORT).show();
+                // Add another action here
+            }
+        });
+        addNewGeofLL.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getActivity(), "Might allow to add new geofences", Toast.LENGTH_SHORT).show();
+            }
+        });
+        viewLocLogsLL.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getActivity(), "Will show location logs", Toast.LENGTH_SHORT).show();
+            }
+        });
+        manageChildrensProfLL.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getActivity(), "Will allow to manage children's profiles", Toast.LENGTH_SHORT).show();
             }
         });
     }
