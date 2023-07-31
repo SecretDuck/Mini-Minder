@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "28905242472",
+    "firebase_url": "https://mini-minder-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "mini-minder",
+    "storage_bucket": "mini-minder.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:28905242472:android:f4ea47521cff0d681120dd",
+        "android_client_info": {
+          "package_name": "com.tmung.miniminder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "28905242472-kv79vk27scmu6drm86gvlhu47c0fu0m3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLg0P_8_lxa-49KIxBLe7YCnGs9tt28Yo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "28905242472-kv79vk27scmu6drm86gvlhu47c0fu0m3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

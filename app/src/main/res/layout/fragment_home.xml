@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <include layout="@layout/fragment_bottom_sheet" />
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <TextView
+        android:id="@+id/tv_welcome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome!"
+        android:textSize="25sp"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="35dp"/>
+
+    <Button
+        android:id="@+id/btn_addNewGeofence"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_welcome"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="40dp"
+        android:text="Add New Geofence" />
+
+    <Button
+        android:id="@+id/btn_viewActiveGeofences"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/btn_addNewGeofence"
+        android:layout_marginTop="20dp"
+        android:layout_centerInParent="true"
+        android:text="View Active Geofences" />
+
+    <Button
+        android:id="@+id/btn_manageAlerts"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/btn_viewActiveGeofences"
+        android:layout_marginTop="20dp"
+        android:layout_centerInParent="true"
+        android:text="Manage Alerts" />
+
+    <Button
+        android:id="@+id/btn_viewLogs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/btn_manageAlerts"
+        android:layout_marginTop="20dp"
+        android:layout_centerInParent="true"
+        android:text="View Location Logs" />
+
+    <Button
+        android:id="@+id/btn_manageChildren"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/btn_viewLogs"
+        android:layout_marginTop="20dp"
+        android:layout_centerInParent="true"
+        android:text="Manage Children Profiles" />
+
+</RelativeLayout>
