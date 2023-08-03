@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     new HomeFragment()).commit();
         } else if (id == R.id.nav_map) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    new ParentMapFragment()).commit();
+                    new SimulationFragment()).commit();
         } else if (id == R.id.nav_child) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     new ChildLocFragment()).commit();
