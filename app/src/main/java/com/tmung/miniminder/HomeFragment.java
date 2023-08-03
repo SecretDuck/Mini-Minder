@@ -6,6 +6,8 @@ import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +25,8 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
@@ -32,6 +36,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -142,12 +148,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                         googleMap.clear();  // Clear all existing markers
                         existingGeofences = geofenceLocations;  // Update the existing geofences
 
-                        // Add a marker for each geofence
+                        // Draw circle around each geofence
                         for (LocationData geofence : geofenceLocations) {
-                            googleMap.addMarker(new MarkerOptions()
-                                    .position(new LatLng(geofence.getLatitude(), geofence.getLongitude()))
-                                    .title("Geofence Location"));
-                            // Draw circle around the geofence
+                            //googleMap.addMarker(new MarkerOptions()
+                            //        .position(new LatLng(geofence.getLatitude(), geofence.getLongitude()))
+                            //        .title("Geofence Location"));
+
                             Circle circle = googleMap.addCircle(new CircleOptions()
                                     .center(new LatLng(geofence.getLatitude(), geofence.getLongitude()))
                                     .radius(150)
@@ -170,43 +176,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         simulateChild.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                isSimulRunning = true;
-                Toast.makeText(requireContext(), "Simulation running; click anywhere to stop simulation", Toast.LENGTH_LONG).show();
-                ValueEventListener valueEventListener = new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        Iterator<DataSnapshot> iterator = dataSnapshot.getChildren().iterator();
-
-                        simulRunnable = new Runnable() {
-                            @Override
-                            public void run() {
-                                if (iterator.hasNext() && isSimulRunning) {
-                                    DataSnapshot snapshot = iterator.next();
-                                    LocationData locationData = snapshot.getValue(LocationData.class);
-                                    if (locationData != null) {
-                                        updateChildLocOnMap(locationData.getLatitude(), locationData.getLongitude());
-                                    }
-                                    // Re-run this runnable after 2 seconds
-                                    simulHandler.postDelayed(this, 2000);
-                                } else {
-                                    isSimulRunning = false;
-                                    simulHandler.removeCallbacks(simulRunnable);
-                                    Toast.makeText(requireContext(), "Simulation stopped: no simulationPath initialised", Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        };
-                        // Initial run
-                        simulHandler.post(simulRunnable);
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                        // Handle database error
-                        Log.e("Firebase", "onCancelled", databaseError.toException());
-                    }
-                };
-                simulPathRef.addListenerForSingleValueEvent(valueEventListener);
+                NavController navController = Navigation.findNavController(v);
+                navController.navigate(R.id.action_HomeFragment_to_ChildLocFragment);
             }
         });
 
@@ -242,19 +213,60 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         // Start listening for child's location updates from Firebase Realtime Database
         listenForChildLocationUpdates();
         googleMap.setOnMarkerClickListener(this);
-        // Method for the simulation; sends coordinates to firebase to simulate child moving
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(@NonNull LatLng latLng) {
-                if (!isSimulRunning) {
-                    // Send data to firebase
-                    sendDataToFirebase(latLng.latitude, latLng.longitude);
-                } else {
-                    // Stop the simulation
-                    Toast.makeText(requireContext(), "Simulation stopped", Toast.LENGTH_SHORT).show();
-                    isSimulRunning = false;
-                    simulHandler.removeCallbacks(simulRunnable);
-                }
+                fetchExistingGeofences(new GeofenceFetcher() {
+                    @Override
+                    public void onFetched(List<LocationData> geofenceLocations) {
+                        for (LocationData locationData : geofenceLocations) {
+                            //if (locationData.getLatitude() == latLng.latitude && locationData.getLongitude() == latLng.longitude) {
+                            if (geofenceExists(latLng.latitude, latLng.longitude)) {
+                                new AlertDialog.Builder(requireContext())
+                                        .setTitle("Delete Geofence")
+                                        .setMessage("Do you want to delete this geofence?")
+                                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                // User clicked "Yes", delete the geofence
+                                                DatabaseReference geofenceRef = FirebaseDatabase.getInstance().getReference("geofenceLocations");
+                                                geofenceRef.child(locationData.getId()).removeValue();
+                                                // Remove circle
+                                                Circle circle = circles.get(latLng);
+                                                if (circle != null) {
+                                                    circle.remove();
+                                                    circles.remove(latLng);
+                                                }
+                                            }
+                                        })
+                                        .setNegativeButton(android.R.string.no, null)
+                                        .setIcon(android.R.drawable.ic_dialog_alert)
+                                        .show();
+                                return; // Found the matching geofence, no need to continue
+                            }
+                        }
+                    }
+                });
+            }
+        });
+        // Method for the simulation; sends coordinates to firebase to simulate child moving
+        googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(@NonNull LatLng latLng) {
+                // Create confirmation dialog
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("Confirm Geofence")
+                        .setMessage("Create geofence here?")
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // if confirmed, setup geofence at loc, send geofence to database
+                                setupGeofence(latLng.latitude, latLng.longitude);
+                                sendGeofenceToFirebase(latLng.latitude, latLng.longitude);
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, null)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
             }
         });
 
@@ -285,10 +297,10 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         });
     }
 
-    private void sendDataToFirebase(double latitude, double longitude) {
+    private void sendGeofenceToFirebase(double latitude, double longitude) {
         // Initialize Firebase Database
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("simulationPath");
+        DatabaseReference myRef = database.getReference("geofenceLocations");
 
         // Create a new LocationData object
         LocationData locationData = new LocationData(latitude, longitude);
@@ -298,7 +310,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        Toast.makeText(getContext(), "Location data sent to Firebase", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Geofence data sent to Firebase", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -361,10 +373,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         return false;
     }
 
-    private void setupGeofenceCustom(double latitude, double longitude) {
-        setupGeofence(latitude, longitude);
-    }
-
     // Method to listen for child's location updates from Firebase Realtime Database
     private void listenForChildLocationUpdates() {
         databaseRef.addValueEventListener(new ValueEventListener() {
@@ -416,8 +424,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                 .addGeofence(geofence)
                 .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
                 .build();
-        // default Toast to check permissions check
-        //Toast.makeText(requireActivity(), "setupGeofence working...", Toast.LENGTH_SHORT).show();
 
         if (ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -438,13 +444,25 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                         }
                     });
             // Draw circle around the geofence
-            CircleOptions circleOptions = new CircleOptions()
+            /*CircleOptions circleOptions = new CircleOptions()
                     .center(new LatLng(latitude, longitude))
                     .radius(geofenceRadius)
                     .strokeColor(Color.RED)
                     .fillColor(0x220000FF)
                     .strokeWidth(5);
             googleMap.addCircle(circleOptions);
+             */
+            childMarker = googleMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(latitude, longitude))
+                    //.icon(childIcon)
+                    .title("Child's Location"));
+            Circle circle = googleMap.addCircle(new CircleOptions()
+                    .center(new LatLng(latitude, longitude))
+                    .radius(150)
+                    .strokeColor(Color.RED)
+                    .fillColor(0x220000FF)
+                    .strokeWidth(5));
+            circles.put(new LatLng(geofence.getLatitude(), geofence.getLongitude()), circle);
         } else {
             Toast.makeText(requireActivity(), "Permissions not given", Toast.LENGTH_SHORT).show();
         }
@@ -484,7 +502,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
             }
 
             // customise the marker for the child's loc
-            //Bitmap childIconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.child_icon);
+            //Bitmap childIconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_child);
             //BitmapDescriptor childIcon = BitmapDescriptorFactory.fromBitmap(childIconBitmap);
 
             // add a marker for the child's location
