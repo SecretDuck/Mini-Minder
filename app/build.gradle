@@ -45,10 +45,15 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui:2.6.0'
     implementation 'com.google.android.gms:play-services-maps:18.1.0'
     implementation 'com.google.firebase:firebase-database:20.2.2'
+    implementation files('libs/bcprov-jdk15on-1.70.jar')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation 'com.google.android.gms:play-services-location:21.0.1'
     implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.0"))
+
+    implementation 'androidx.navigation:navigation-fragment:2.6.0'
+    implementation 'androidx.navigation:navigation-ui:2.6.0'
+
 }
 apply plugin: 'com.google.gms.google-services'
