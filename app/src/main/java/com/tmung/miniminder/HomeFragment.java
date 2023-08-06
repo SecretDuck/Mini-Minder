@@ -11,7 +11,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.security.keystore.KeyProperties;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +27,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
@@ -52,11 +55,17 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 
 public class HomeFragment extends Fragment implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
     // TODO: incorporate ViewModel to separate the UI and activity/fragment
@@ -73,6 +82,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
     private Runnable simulRunnable;
     private List<LocationData> existingGeofences = new ArrayList<>();
     private Map<LatLng, Circle> circles = new HashMap<>();
+    private SharedViewModel sharedViewModel;
 
 
 
@@ -150,9 +160,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
 
                         // Draw circle around each geofence
                         for (LocationData geofence : geofenceLocations) {
-                            //googleMap.addMarker(new MarkerOptions()
-                            //        .position(new LatLng(geofence.getLatitude(), geofence.getLongitude()))
-                            //        .title("Geofence Location"));
+                            googleMap.addMarker(new MarkerOptions()
+                                    .position(new LatLng(geofence.getLatitude(), geofence.getLongitude()))
+                                    .title("Geofence Location"));
 
                             Circle circle = googleMap.addCircle(new CircleOptions()
                                     .center(new LatLng(geofence.getLatitude(), geofence.getLongitude()))
@@ -176,8 +186,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         simulateChild.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                NavController navController = Navigation.findNavController(v);
-                navController.navigate(R.id.action_HomeFragment_to_ChildLocFragment);
+                Toast.makeText(requireActivity(), "Please switch to simulation tab", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -374,17 +383,18 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
     }
 
     // Method to listen for child's location updates from Firebase Realtime Database
+    /*
     private void listenForChildLocationUpdates() {
         databaseRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 // Get the child's location data from Firebase
-                Double latitude = dataSnapshot.child("lat").getValue(Double.class);
-                Double longitude = dataSnapshot.child("long").getValue(Double.class);
+                Double latitude = dataSnapshot.child("latitude").getValue(Double.class);
+                Double longitude = dataSnapshot.child("longitude").getValue(Double.class);
 
                 if (latitude != null && longitude != null) {
                     // Update the map with the child's location
-                    Toast.makeText(getActivity(), "lat, long NOT null: " + latitude + " , " + longitude, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "Starting...", Toast.LENGTH_LONG).show();
                     updateChildLocOnMap(latitude, longitude);
                 } else {
                     updateChildLocOnMap(34.0195, 118.4912);
@@ -398,6 +408,62 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                 Toast.makeText(getActivity(), "Database-read error", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+     */
+    private void listenForChildLocationUpdates() {
+        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
+        sharedViewModel.getAesKey().observe(getViewLifecycleOwner(), aesKey -> {
+            databaseRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    // Assuming the latitude and longitude are encrypted, decrypt them here using aesKey
+                    String encryptedLocation = dataSnapshot.child("encryptedLocation").getValue(String.class);
+
+                    Pair<Double, Double> latitudeLongitude;
+                    try {
+                        latitudeLongitude = decrypt(encryptedLocation, aesKey); // You will need to define this method
+                    } catch (Exception e) {
+                        // handle the exception
+                        Log.e("DecryptionError", "Error decrypting data", e);
+                        return;
+                    }
+
+                    if (latitudeLongitude != null) {
+                        // Update the map with the child's location
+                        Toast.makeText(getActivity(), "Starting...", Toast.LENGTH_LONG).show();
+                        updateChildLocOnMap(latitudeLongitude.first, latitudeLongitude.second);
+                    } else {
+                        updateChildLocOnMap(34.0195, 118.4912);
+                        Toast.makeText(getActivity(), "Lat and Long are NULL; but listening...", Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    // Handle database read error (if any)
+                    Toast.makeText(getActivity(), "Database-read error", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+    }
+
+    // EXPLAIN THIS
+    public static Pair<Double, Double> decrypt(String cipherText, SecretKey aesKey) throws Exception {
+        byte[] ivAndCiphertext = Base64.getDecoder().decode(cipherText);
+
+        // Extract the IV and ciphertext from the input string
+        byte[] iv = new byte[16];
+        System.arraycopy(ivAndCiphertext, 0, iv, 0, iv.length);
+        byte[] encryptedBytes = new byte[ivAndCiphertext.length - iv.length];
+        System.arraycopy(ivAndCiphertext, iv.length, encryptedBytes, 0, encryptedBytes.length);
+
+        Cipher cipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7);
+        cipher.init(Cipher.DECRYPT_MODE, aesKey, new IvParameterSpec(iv));
+        byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+
+        // Parse the decrypted string back to doubles
+        String[] latLon = new String(decryptedBytes, StandardCharsets.UTF_8).split(",");
+        return new Pair<>(Double.parseDouble(latLon[0]), Double.parseDouble(latLon[1]));
     }
 
     // Create a PendingIntent for the GeofenceBroadcastReceiver

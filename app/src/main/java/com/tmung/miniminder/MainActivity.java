@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.os.Bundle;
 import android.security.keystore.KeyGenParameterSpec;
@@ -45,30 +46,19 @@ import org.bouncycastle.crypto.params.DHParameters;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
+    private SharedViewModel sharedViewModel;
     private ParentsKeyExchange keyExchange;
-    private DatabaseReference childPublicKeyRef;
     private DrawerLayout drawer;
 
     // SEND SALT TO CHILD'S APP AS WELL
     byte[] salt = new byte[16]; // Define a byte array for the salt
 
-    // Define the domain parameters for the Diffie-Hellman key exchange
-    /*private BigInteger p = new BigInteger("FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
-            + "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
-            + "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C24"
-            + "416A40BDF122D0A987DBE601D08FFD8A02FAC905D8AEBBD"
-            + "E2355DABF599FC6573D89DDF1AC16DFA2CBA3A3BA1863C"
-            + "85C97FFFFFFFFFFFFFFFF", 16);
-
-    private BigInteger g = BigInteger.valueOf(2);
-
-    private DHParameterSpec dhParamSpec = new DHParameterSpec(p, g);
-     */
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -103,12 +93,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         parentPublicKey.setValue(parentsPublicKey);
 
         // After the child's public key is obtained from Firebase
-        childPublicKeyRef = FirebaseDatabase.getInstance().getReference("childPublicKey");
+        DatabaseReference childPublicKeyRef = FirebaseDatabase.getInstance().getReference("childPublicKey");
         childPublicKeyRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    String childPublicKeyString = dataSnapshot.getValue(String.class);
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String childPublicKeyString = snapshot.getValue(String.class);
                     try {
                         // Set child's public key
                         keyExchange.setChildPublicKey(childPublicKeyString);
@@ -118,8 +108,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                         // Use sharedSecret to derive an AES key
                         SecretKey aesKey = keyExchange.deriveAESKey(sharedSecret, salt, 256); // Use 256-bit key for AES
-                        // Use aesKey for encryption and decryption
-                        // ...
+                        // Pass it to the ViewModel
+                        sharedViewModel.setAesKey(aesKey);
 
                     } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
                         e.printStackTrace();
@@ -177,9 +167,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 // Handle errors if needed
             }
         });
-
-
-
     } // End onCreate here
 
     @Override
