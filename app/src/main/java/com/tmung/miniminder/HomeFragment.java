@@ -113,7 +113,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         geofencePendingIntent = createGeofencingPendingIntent();
 
         // Get the reference to the child's location in Firebase Realtime Database
-        databaseRef = FirebaseDatabase.getInstance().getReference("Locs/kid");
+        databaseRef = FirebaseDatabase.getInstance().getReference("encryptedLocation");
 
         mBottomSheetLayout = view.findViewById(R.id.bottom_sheet_layout);
         sheetBehavior = BottomSheetBehavior.from(mBottomSheetLayout);
@@ -537,7 +537,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
 
     // Setup geofence at child's current loc from Firebase
     private void setupGeofenceChildCurrLoc() {
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Locs/kid");
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("encryptedLocation");
         databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {

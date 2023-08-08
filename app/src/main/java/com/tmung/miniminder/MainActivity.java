@@ -118,50 +118,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             }
 
-            /*
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    String childPublicKeyString = dataSnapshot.getValue(String.class);
-                    byte[] childPublicKeyBytes = Base64.getDecoder().decode(childPublicKeyString);
-
-                    try {
-                        DHParameterSpec dhParamSpec = new DHParameterSpec(p, g);
-                        DHParameters dhParams = new DHParameters(dhParamSpec.getP(), dhParamSpec.getG());
-
-                        // Decode the child's public key and create DHPublicKeySpec
-                        BigInteger childPublicKeyInt = new BigInteger(1, childPublicKeyBytes);
-                        DHPublicKeySpec publicKeySpec = new DHPublicKeySpec(childPublicKeyInt, dhParamSpec.getP(), dhParamSpec.getG());
-                        DHPublicKeyParameters childPublicKeyParams = new DHPublicKeyParameters(publicKeySpec.getY(), dhParams);
-
-                        // Now perform key agreement to obtain the shared secret
-                        DHPrivateKeyParameters privateKeyParams = keyExchange.getPrivateKeyParams();
-                        KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
-
-                        // Convert DHPrivateKeyParameters to PrivateKey
-                        KeyFactory keyFactory = KeyFactory.getInstance("DH");
-                        DHPrivateKeySpec dhPrivateKeySpec = new DHPrivateKeySpec(privateKeyParams.getX(), dhParams.getP(), dhParams.getG());
-                        PrivateKey privateKey = keyFactory.generatePrivate(dhPrivateKeySpec);
-
-                        keyAgreement.init(privateKey);
-
-                        // Convert DHPublicKeyParameters to PublicKey
-                        DHPublicKeySpec dhPublicKeySpec = new DHPublicKeySpec(childPublicKeyInt, dhParams.getP(), dhParams.getG());
-                        PublicKey childPublicKey = keyFactory.generatePublic(dhPublicKeySpec);
-
-                        keyAgreement.doPhase(childPublicKey, true);
-                        byte[] sharedSecret = keyAgreement.generateSecret();
-
-                        // Use sharedSecret as the derived encryption key (e.g., AES key) for secure communication
-                        // ...
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        // Handle the exception as needed
-                    }
-                }
-            }
-             */
-
             //@Override
             public void onCancelled(DatabaseError databaseError) {
                 // Handle errors if needed
