@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
@@ -11,10 +12,39 @@
         <item
             android:id="@+id/nav_map"
             android:icon="@drawable/ic_map"
-            android:title="Map" />
+            android:title="Simulation" />
         <item
             android:id="@+id/nav_child"
             android:icon="@drawable/ic_child"
             android:title="Child's Phone" />
+        <item
+            android:id="@+id/nav_switch_item_container"
+            android:title="Tracking"
+            android:checkable="false"
+            android:icon="@drawable/ic_tracking"
+            app:actionViewClass="android.widget.FrameLayout" />
     </group>
+    <!--
+    <group>
+        <item
+            android:id="@+id/nav_switch_item_container"
+            android:title="Tracking"
+            android:checkable="false"
+            android:icon="@drawable/ic_tracking"
+            app:actionViewClass="android.widget.FrameLayout" />
+    </group>
+    -->
+    <item android:title="">
+        <menu>
+            <item
+                android:id="@+id/nav_spacer"
+                android:title=""
+                android:icon="@android:color/transparent"
+                app:actionLayout="@layout/empty_space" />
+            <item
+                android:id="@+id/nav_logout"
+                android:title="Logout"
+                android:icon="@drawable/ic_logout" />
+        </menu>
+    </item>
 </menu>

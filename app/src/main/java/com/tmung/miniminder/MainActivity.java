@@ -3,18 +3,25 @@ package com.tmung.miniminder;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.ViewModelProvider;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.widget.CompoundButton;
+import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -46,17 +53,23 @@ import org.bouncycastle.crypto.params.DHParameters;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
+    private FirebaseAuth firebaseAuth;
     private SharedViewModel sharedViewModel;
+    private ValueEventListener childPublicKeyEventListener;
+    private DatabaseReference childPublicKeyRef;
     private ParentsKeyExchange keyExchange;
     private DrawerLayout drawer;
 
-    // SEND SALT TO CHILD'S APP AS WELL
-    byte[] salt = new byte[16]; // Define a byte array for the salt
+    // Define a byte array for the salt
+    byte[] salt = { (byte) 0xa9, (byte) 0x0f, (byte) 0x3b, (byte) 0x7e, (byte) 0xb3, (byte) 0x21, (byte) 0x4a, (byte) 0x6f, (byte) 0x85, (byte) 0xc9, (byte) 0xe0, (byte) 0xf1, (byte) 0x5d, (byte) 0x6c, (byte) 0x7b, (byte) 0x8a };
 
+    // TODO: IMPLEMENT A 'PROFILE' SECTION, WITH 'DELETE ACCOUNT' AN OPTION
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        firebaseAuth = FirebaseAuth.getInstance();
 
         sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
 
@@ -66,6 +79,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        // Navigation switch item implementation
+        FrameLayout switchContainer = (FrameLayout) navigationView.getMenu().findItem(R.id.nav_switch_item_container).getActionView();
+        SwitchCompat trackingSwitch = (SwitchCompat) LayoutInflater.from(this).inflate(R.layout.layout_switch, switchContainer, false);
+        switchContainer.addView(trackingSwitch);
+
+        trackingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // Handling switch changes
+                trackingSwitch.setText(isChecked ? "On" : "Off");
+
+                // Set the isLocationUpdating flag in the Firebase database to the new state of the switch.
+                DatabaseReference isLocationUpdatingRef = FirebaseDatabase.getInstance().getReference("isLocationUpdating");
+                isLocationUpdatingRef.setValue(isChecked);
+            }
+        });
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -80,21 +110,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Initialise FirebaseApp
         FirebaseApp.initializeApp(this);
 
-        // Generate a random salt
-        new SecureRandom().nextBytes(salt);
-
         // Diffie-Hellman key exchange to encrypt data
         keyExchange = new ParentsKeyExchange();
         KeyPair keyPair = keyExchange.generateKeyPair(); // Generate the public/private key pair
         String parentsPublicKey = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
 
         // Send parent's public key to Firebase, so the child's app can derive the shared secret
-        DatabaseReference parentPublicKey = FirebaseDatabase.getInstance().getReference("parentPublicKey");
-        parentPublicKey.setValue(parentsPublicKey);
+        DatabaseReference parentPublicKeyRef = FirebaseDatabase.getInstance().getReference("parentPublicKey");
+        parentPublicKeyRef.setValue(parentsPublicKey);
 
         // After the child's public key is obtained from Firebase
-        DatabaseReference childPublicKeyRef = FirebaseDatabase.getInstance().getReference("childPublicKey");
-        childPublicKeyRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        childPublicKeyRef = FirebaseDatabase.getInstance().getReference("childPublicKey");
+        childPublicKeyEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (snapshot.exists()) {
@@ -118,11 +145,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             }
 
-            //@Override
+            @Override
             public void onCancelled(DatabaseError databaseError) {
                 // Handle errors if needed
             }
-        });
+        };
+
+        childPublicKeyRef.addValueEventListener(childPublicKeyEventListener);
     } // End onCreate here
 
     @Override
@@ -137,6 +166,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.nav_child) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     new ChildLocFragment()).commit();
+        } else if (id == R.id.nav_logout) {
+            // Log user out
+            firebaseAuth.signOut();
+
+            // After logging out, navigate back to the LoginActivity
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+            finish();
         }
 
         drawer.closeDrawer(GravityCompat.START);
@@ -150,6 +186,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             drawer.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (childPublicKeyRef != null && childPublicKeyEventListener != null) {
+            childPublicKeyRef.removeEventListener(childPublicKeyEventListener);
         }
     }
 }
