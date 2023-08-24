@@ -14,7 +14,7 @@
         android:id="@+id/bottom_sheet_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_profile_item"
+        android:background="@color/cardview_shadow_start_color"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -26,9 +26,9 @@
             android:layout_weight="3"
             android:fontFamily="sans-serif-light"
             android:padding="24dp"
+            android:textSize="18sp"
             android:text="Actions"
-            android:textColor="@android:color/black"
-            android:textSize="18sp" />
+            android:textColor="@android:color/black" />
 
         <ImageView
             android:id="@+id/bottom_sheet_arrow"
@@ -40,12 +40,57 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/viewCurrLinearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_profile_item"
         android:orientation="horizontal"
+        android:id="@+id/viewCurrLinearLayout"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_walk" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:padding="8dp"
+            android:text="Start simulation" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/addNewGeofLinearLayout"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_add"
+            android:layout_margin="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add new geofence"
+            android:layout_gravity="center_vertical"
+            android:padding="8dp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/simulateChild"
+        android:background="?android:attr/selectableItemBackground"
         android:padding="8dp">
 
         <ImageView
@@ -64,96 +109,46 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/addNewGeofLinearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_profile_item"
         android:orientation="horizontal"
-        android:padding="8dp">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_add" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:padding="8dp"
-            android:text="Add new geofence" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/simulateChild"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_profile_item"
-        android:orientation="horizontal"
-        android:padding="8dp">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_walk" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:padding="8dp"
-            android:text="Simulate child's movement" />
-
-    </LinearLayout>
-
-    <LinearLayout
         android:id="@+id/viewLocLogsLinearLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_profile_item"
-        android:orientation="horizontal"
+        android:background="?android:attr/selectableItemBackground"
         android:padding="8dp">
 
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_menu" />
+            android:src="@drawable/ic_menu"
+            android:layout_margin="8dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="View path "
             android:layout_gravity="center_vertical"
-            android:padding="8dp"
-            android:text="View location logs" />
+            android:padding="8dp"/>
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/manageChildrensProf"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_profile_item"
         android:orientation="horizontal"
+        android:id="@+id/manageChildrensProf"
+        android:background="?android:attr/selectableItemBackground"
         android:padding="8dp">
 
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_profile" />
+            android:src="@drawable/ic_profile"
+            android:layout_margin="8dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Manage children's profiles"
             android:layout_gravity="center_vertical"
-            android:padding="8dp"
-            android:text="Manage children's profiles" />
+            android:padding="8dp"/>
     </LinearLayout>
 </LinearLayout>

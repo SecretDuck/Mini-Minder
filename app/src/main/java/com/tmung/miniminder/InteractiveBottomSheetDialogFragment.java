@@ -20,7 +20,7 @@ public class InteractiveBottomSheetDialogFragment extends BottomSheetDialogFragm
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_bottom_sheet, container, false);
 
-        // You can setup your views here
+        // Set up views here
 
         return view;
     }

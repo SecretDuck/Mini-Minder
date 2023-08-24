@@ -38,6 +38,9 @@ public class LoginActivity extends AppCompatActivity {
         }
         // If no user is signed in, the login screen will be shown as usual
     }
+    public void goToRegister(View view) {
+        startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
+    }
 
     public void login(View view) {  // You can link this method to a button's onClick in the XML layout
         String email = edtTxtEmail.getText().toString().trim();

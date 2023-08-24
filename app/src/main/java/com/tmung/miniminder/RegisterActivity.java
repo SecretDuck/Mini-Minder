@@ -13,24 +13,34 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
 
 public class RegisterActivity extends AppCompatActivity {
 
     private FirebaseAuth firebaseAuth;
-    private EditText edtTxtEmail, edtTxtPass;  // Assuming you have these in your layout
+    private DatabaseReference databaseReference;
+    private EditText edtTxtEmail, edtTxtPass;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register);  // Using the correct layout file
+        setContentView(R.layout.activity_register);
 
         firebaseAuth = FirebaseAuth.getInstance();
+        databaseReference = FirebaseDatabase.getInstance().getReference("users");
 
         edtTxtEmail = findViewById(R.id.edtTxtEmail);
         edtTxtPass = findViewById(R.id.edtTxtPass);
     }
 
-    public void register(View view) {  // This method can be directly linked to a button's onClick in XML
+    public void goToLogin(View view) {
+        startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+    }
+
+    public void register(View view) {
         String email = edtTxtEmail.getText().toString().trim();
         String password = edtTxtPass.getText().toString().trim();
 
@@ -39,6 +49,9 @@ public class RegisterActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
+                            // After successful registration, set up user in the database
+                            setupUserInDatabase();
+
                             // Sign up success
                             startActivity(new Intent(RegisterActivity.this, MainActivity.class));
                             finish();
@@ -50,4 +63,14 @@ public class RegisterActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    private void setupUserInDatabase() {
+        String userId = firebaseAuth.getCurrentUser().getUid();
+        String email = edtTxtEmail.getText().toString().trim();
+
+        databaseReference.child(userId).child("role").setValue("parent");
+        databaseReference.child(userId).child("email").setValue(email); 
+        databaseReference.child(userId).child("linkedAccounts").setValue(new HashMap<>());
+    }
+
 }

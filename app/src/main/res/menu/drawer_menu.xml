@@ -10,13 +10,13 @@
             android:icon="@drawable/ic_home"
             android:title="Home" />
         <item
-            android:id="@+id/nav_map"
+            android:id="@+id/nav_simulation"
             android:icon="@drawable/ic_map"
             android:title="Simulation" />
         <item
-            android:id="@+id/nav_child"
-            android:icon="@drawable/ic_child"
-            android:title="Child's Phone" />
+            android:id="@+id/nav_profile"
+            android:icon="@drawable/ic_profile"
+            android:title="Profile" />
         <item
             android:id="@+id/nav_switch_item_container"
             android:title="Tracking"
@@ -24,16 +24,7 @@
             android:icon="@drawable/ic_tracking"
             app:actionViewClass="android.widget.FrameLayout" />
     </group>
-    <!--
-    <group>
-        <item
-            android:id="@+id/nav_switch_item_container"
-            android:title="Tracking"
-            android:checkable="false"
-            android:icon="@drawable/ic_tracking"
-            app:actionViewClass="android.widget.FrameLayout" />
-    </group>
-    -->
+
     <item android:title="">
         <menu>
             <item

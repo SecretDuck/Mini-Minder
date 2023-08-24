@@ -53,6 +53,7 @@ import org.bouncycastle.crypto.params.DHParameters;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
+    // Class-level variables
     private FirebaseAuth firebaseAuth;
     private SharedViewModel sharedViewModel;
     private ValueEventListener childPublicKeyEventListener;
@@ -60,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private ParentsKeyExchange keyExchange;
     private DrawerLayout drawer;
 
-    // Define a byte array for the salt
+    // Define a byte array for the salt, for key derivation
     byte[] salt = { (byte) 0xa9, (byte) 0x0f, (byte) 0x3b, (byte) 0x7e, (byte) 0xb3, (byte) 0x21, (byte) 0x4a, (byte) 0x6f, (byte) 0x85, (byte) 0xc9, (byte) 0xe0, (byte) 0xf1, (byte) 0x5d, (byte) 0x6c, (byte) 0x7b, (byte) 0x8a };
 
     // TODO: IMPLEMENT A 'PROFILE' SECTION, WITH 'DELETE ACCOUNT' AN OPTION
@@ -69,22 +70,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initialise Firebase, and ViewModel below that
         firebaseAuth = FirebaseAuth.getInstance();
 
         sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
 
+        // Set up the toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // Set up navigation drawer
         drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        // Navigation switch item implementation
+        // Add switch for location tracking in the navigation drawer
         FrameLayout switchContainer = (FrameLayout) navigationView.getMenu().findItem(R.id.nav_switch_item_container).getActionView();
         SwitchCompat trackingSwitch = (SwitchCompat) LayoutInflater.from(this).inflate(R.layout.layout_switch, switchContainer, false);
         switchContainer.addView(trackingSwitch);
 
+        // Handle switch changes for tracking
         trackingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -97,11 +102,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
+        // ActionBarDrawerToggle to manage drawer open/close actions
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
+        // Set default fragment as Home if no instance is saved
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     new HomeFragment()).commit();
@@ -119,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         DatabaseReference parentPublicKeyRef = FirebaseDatabase.getInstance().getReference("parentPublicKey");
         parentPublicKeyRef.setValue(parentsPublicKey);
 
-        // After the child's public key is obtained from Firebase
+        // Listen for child's public key
         childPublicKeyRef = FirebaseDatabase.getInstance().getReference("childPublicKey");
         childPublicKeyEventListener = new ValueEventListener() {
             @Override
@@ -130,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         // Set child's public key
                         keyExchange.setChildPublicKey(childPublicKeyString);
 
-                        // Now perform key agreement to obtain the shared secret
+                        // Perform key agreement to obtain the shared secret
                         byte[] sharedSecret = keyExchange.calculateSharedSecret();
 
                         // Use sharedSecret to derive an AES key
@@ -156,16 +163,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        // Switching between different fragments based on navigation selection
         int id = item.getItemId();
         if (id == R.id.nav_home) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     new HomeFragment()).commit();
-        } else if (id == R.id.nav_map) {
+        } else if (id == R.id.nav_simulation) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     new SimulationFragment()).commit();
-        } else if (id == R.id.nav_child) {
+        } else if (id == R.id.nav_profile) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    new ChildLocFragment()).commit();
+                    new ProfileFragment()).commit();
         } else if (id == R.id.nav_logout) {
             // Log user out
             firebaseAuth.signOut();
@@ -174,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             startActivity(new Intent(MainActivity.this, LoginActivity.class));
             finish();
         }
-
+        // Close drawer after option is selected
         drawer.closeDrawer(GravityCompat.START);
 
         return true;
@@ -182,6 +190,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public void onBackPressed() {
+        // Pressing 'back' closes the navigation drawer
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -191,9 +200,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        // Remove ValueEventListener when the activity is destroyed, to prevent memory leaks
         if (childPublicKeyRef != null && childPublicKeyEventListener != null) {
             childPublicKeyRef.removeEventListener(childPublicKeyEventListener);
         }
+        super.onDestroy();
     }
 }
