@@ -49,6 +49,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.maps.android.SphericalUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -172,7 +173,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                             // Draw a circle around each geofence
                             Circle circle = googleMap.addCircle(new CircleOptions()
                                     .center(new LatLng(geofence.getLatitude(), geofence.getLongitude()))
-                                    .radius(150)
+                                    .radius(geofence.getRadius())
                                     .strokeColor(Color.RED)
                                     .fillColor(0x220000FF)
                                     .strokeWidth(5));
@@ -269,7 +270,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
 
         // Start listening for child's location updates from Firebase Realtime Database
         listenForChildLocationUpdates();
-        googleMap.setOnMarkerClickListener(this);
+        //googleMap.setOnMarkerClickListener(this);
 
         // method to delete geofences
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -278,8 +279,14 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                 fetchExistingGeofences(new GeofenceFetcher() {
                     @Override
                     public void onFetched(List<LocationData> geofenceLocations) {
-                        for (LocationData locationData : geofenceLocations) {
-                            if (geofenceExists(latLng.latitude, latLng.longitude)) {
+                        for (LocationData geofence : geofenceLocations) {
+                            //if (geofenceExists(latLng.latitude, latLng.longitude)) {
+                            // for each fetched geofence, check if its radius
+                            LatLng geofenceCenter = new LatLng(geofence.getLatitude(), geofence.getLongitude());
+                            double distance = SphericalUtil.computeDistanceBetween(geofenceCenter, latLng);
+
+                            // check if clicked point is inside geofence radius
+                            if (distance <= geofence.getRadius()) {
                                 new AlertDialog.Builder(requireContext())
                                         .setTitle("Delete Geofence")
                                         .setMessage("Do you want to delete this geofence?")
@@ -287,12 +294,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                                             public void onClick(DialogInterface dialog, int which) {
                                                 // User clicked "Yes", delete the geofence
                                                 DatabaseReference geofenceRef = FirebaseDatabase.getInstance().getReference("geofenceLocations");
-                                                geofenceRef.child(locationData.getId()).removeValue();
+                                                geofenceRef.child(geofence.getId()).removeValue();
                                                 // Remove circle
-                                                Circle circle = circles.get(latLng);
+                                                Circle circle = circles.get(geofenceCenter);
                                                 if (circle != null) {
                                                     circle.remove();
-                                                    circles.remove(latLng);
+                                                    circles.remove(geofenceCenter);
                                                 }
                                             }
                                         })
@@ -319,7 +326,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                             public void onClick(DialogInterface dialog, int which) {
                                 // if confirmed, setup geofence at loc, send geofence to database
                                 setupGeofence(latLng.latitude, latLng.longitude);
-                                sendGeofenceToFirebase(latLng.latitude, latLng.longitude);
+                                sendGeofenceToFirebase(latLng.latitude, latLng.longitude, geofenceRadius);
                             }
                         })
                         .setNegativeButton(android.R.string.cancel, null)
@@ -356,20 +363,20 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
     }
 
     // Method to save new geofence to Firebase
-    private void sendGeofenceToFirebase(double latitude, double longitude) {
+    private void sendGeofenceToFirebase(double latitude, double longitude, float geofenceRadius) {
         // Initialize Firebase Database
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference geoRef = database.getReference("geofenceLocations");
 
         // Create a new LocationData object
-        LocationData locationData = new LocationData(latitude, longitude);
+        LocationData locationData = new LocationData(latitude, longitude, geofenceRadius);
 
         // Create a new child with a unique ID in table
         geoRef.push().setValue(locationData)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        Toast.makeText(getContext(), "Geofence data sent to Firebase", Toast.LENGTH_SHORT).show();
+                        // success
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -533,10 +540,10 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                         }
                     });
 
-            childMarker = googleMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(latitude, longitude))
+            //childMarker = googleMap.addMarker(new MarkerOptions()
+                    //.position(new LatLng(latitude, longitude))
                     //.icon(childIcon)
-                    .title("Child's Location"));
+                    //.title("Child's Location"));
             Circle circle = googleMap.addCircle(new CircleOptions()
                     .center(new LatLng(latitude, longitude))
                     .radius(geofenceRadius)

@@ -383,7 +383,7 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback {
                         public void onSuccess(Void aVoid) {
                             // Geofence was added successfully
                             // add geofence's data to existingGeofences
-                            existingGeofences.add(new LocationData(latitude, longitude));
+                            existingGeofences.add(new LocationData(latitude, longitude, geofenceRadius));
                         }
                     })
                     .addOnFailureListener(requireActivity(), new OnFailureListener() {
