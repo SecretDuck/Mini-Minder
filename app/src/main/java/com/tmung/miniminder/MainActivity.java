@@ -64,7 +64,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     // Define a byte array for the salt, for key derivation
     byte[] salt = { (byte) 0xa9, (byte) 0x0f, (byte) 0x3b, (byte) 0x7e, (byte) 0xb3, (byte) 0x21, (byte) 0x4a, (byte) 0x6f, (byte) 0x85, (byte) 0xc9, (byte) 0xe0, (byte) 0xf1, (byte) 0x5d, (byte) 0x6c, (byte) 0x7b, (byte) 0x8a };
 
-    // TODO: IMPLEMENT A 'PROFILE' SECTION, WITH 'DELETE ACCOUNT' AN OPTION
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -9,11 +9,13 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.security.keystore.KeyProperties;
+import android.text.InputType;
 import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -77,6 +79,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
     private List<Marker> markers = new ArrayList<>();
     private Map<LatLng, Circle> circles = new HashMap<>();
     private SharedViewModel sharedViewModel;
+    private float geofenceRadius = 150; // default geofence radius
 
     // Inflate the home fragment layout
     @Nullable
@@ -160,10 +163,11 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                         // Draw circle around each geofence
                         for (LocationData geofence : geofenceLocations) {
                             // Add a marker at the centre of each geofence, and store it in 'markers'
-                            Marker marker = googleMap.addMarker(new MarkerOptions()
+                            /*Marker marker = googleMap.addMarker(new MarkerOptions()
                                     .position(new LatLng(geofence.getLatitude(), geofence.getLongitude()))
                                     .title("Geofence Location"));
                             markers.add(marker);
+                             */
 
                             // Draw a circle around each geofence
                             Circle circle = googleMap.addCircle(new CircleOptions()
@@ -195,9 +199,39 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         addNewGeofLL.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getActivity(), "To add a new geofence, long-click a location on the map", Toast.LENGTH_LONG).show();
+                // create an EditText to input the radius
+                final EditText input = new EditText(getActivity());
+                // Set input type to numbers
+                input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                input.setHint("Enter radius in meters");
+
+                // create AlertDialog
+                new AlertDialog.Builder(getActivity())
+                        .setTitle("Set Geofence Radius")
+                        .setMessage("Enter your desired geofence radius:")
+                        .setView(input)  // embed the EditText into the AlertDialog
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                // retrieve the radius entered
+                                String radiusString = input.getText().toString();
+                                if (!radiusString.isEmpty()) {
+                                    // parse it to a float & update global geofenceRadius with it
+                                    geofenceRadius = Float.parseFloat(radiusString);
+                                    // Tell user how to create a geofence
+                                    Toast.makeText(getActivity(), "To create geofence, long-click on screen",
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        })
+                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                // Do nothing, user canceled
+                            }
+                        })
+                        .show();
             }
         });
+
         simulateChild.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -229,7 +263,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         super.onDestroyView();
     }
 
-
     @Override
     public void onMapReady(@NonNull GoogleMap map) {
         googleMap = map;
@@ -237,6 +270,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         // Start listening for child's location updates from Firebase Realtime Database
         listenForChildLocationUpdates();
         googleMap.setOnMarkerClickListener(this);
+
+        // method to delete geofences
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(@NonNull LatLng latLng) {
@@ -465,7 +500,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
 
     // Method to create a geofence
     private void setupGeofence(double latitude, double longitude) {
-        float geofenceRadius = 150; // Geofence radius in METERS
+        //float geofenceRadius = 150; // Geofence radius in METERS
 
         Geofence geofence = new Geofence.Builder()
                 .setRequestId("child_geofence") // Unique ID for the geofence
@@ -504,7 +539,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                     .title("Child's Location"));
             Circle circle = googleMap.addCircle(new CircleOptions()
                     .center(new LatLng(latitude, longitude))
-                    .radius(150)
+                    .radius(geofenceRadius)
                     .strokeColor(Color.RED)
                     .fillColor(0x220000FF)
                     .strokeWidth(5));

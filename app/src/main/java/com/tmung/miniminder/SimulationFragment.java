@@ -2,7 +2,10 @@ package com.tmung.miniminder;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -21,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -53,7 +57,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class SimulationFragment extends Fragment implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
+public class SimulationFragment extends Fragment implements OnMapReadyCallback {
     private LinearLayout bottomSheetLayout;
     private BottomSheetBehavior sheetBehavior;
     private ImageView header_arrow_image;
@@ -70,8 +74,9 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback, 
     private Map<LatLng, Circle> circles;
     private ValueEventListener valueEventListener;
     private double geofenceLat, geofenceLong;
-    private float geofenceRadius;
+    private float geofenceRadius = 110;
     private Marker initialMarker;
+    private boolean isChildInGeofence = false;
 
     @Nullable
     @Override
@@ -83,9 +88,9 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback, 
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        existingGeofences = new ArrayList<>();
-        circles = new HashMap<>();
-        locationDataList = new ArrayList<>();
+        existingGeofences = new ArrayList<>(); // to store the geofence(s) for simulation
+        circles = new HashMap<>(); // to store the geofence circle for simulation
+        locationDataList = new ArrayList<>(); // to store the simulation data points
 
         // Set the action bar title
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
@@ -144,7 +149,7 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback, 
 
                 sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 isSimulRunning = true;
-                // Toast.makeText(requireContext(), "Simulation running", Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), "Simulation running", Toast.LENGTH_LONG).show();
 
                 valueEventListener = new ValueEventListener() {
                     @Override
@@ -209,7 +214,9 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback, 
             @Override
             public void onMapClick(@NonNull LatLng latLng) {
                 if (isSimulRunning) { // don't allow deleting geofence when simulation is running
-                    Toast.makeText(getActivity(), "Please end simulation to delete geofence", Toast.LENGTH_SHORT).show();
+                    if (!existingGeofences.isEmpty()) {
+                        Toast.makeText(getActivity(), "Please end simulation to delete geofence", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
                     // check that list is not empty
                     if (existingGeofences.size() > 0) {
@@ -232,9 +239,11 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback, 
                                                 circle.remove();
                                                 circles.remove(geofenceCenter);
                                             }
-
                                             // Clear the existingGeofences list
                                             existingGeofences.clear();
+                                            // Reset the geofence latitude and longitude
+                                            geofenceLat = 0;
+                                            geofenceLong = 0;
                                         }
                                     })
                                     .setNegativeButton(android.R.string.cancel, null)
@@ -245,8 +254,6 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback, 
                 }
             }
         });
-
-
 
         googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
@@ -263,7 +270,7 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback, 
                                 setupGeofence(latLng.latitude, latLng.longitude);
                                 geofenceLat = latLng.latitude;
                                 geofenceLong = latLng.longitude;
-                                geofenceRadius = 150;
+                                //geofenceRadius = 110;
                             }
                         })
                         .setNegativeButton(android.R.string.cancel, null)
@@ -340,46 +347,6 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback, 
         });
     }
 
-    // Retrieve lat and long of marker when clicked, and setup geofence there
-    @Override
-    public boolean onMarkerClick(final Marker marker) {
-        // Get LatLng from marker
-        final LatLng markerPos = marker.getPosition();
-
-        fetchExistingGeofences(new GeofenceFetcher() {
-            @Override
-            public void onFetched(List<LocationData> geofenceLocations) {
-                for (LocationData locationData : geofenceLocations) {
-                    if (locationData.getLatitude() == markerPos.latitude && locationData.getLongitude() == markerPos.longitude) {
-                        new AlertDialog.Builder(requireContext())
-                                .setTitle("Delete Geofence")
-                                .setMessage("Do you want to delete this geofence?")
-                                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        // User clicked "Yes", delete the geofence
-                                        DatabaseReference geofenceRef = FirebaseDatabase.getInstance().getReference("geofenceLocations");
-                                        geofenceRef.child(locationData.getId()).removeValue();
-                                        marker.remove();
-                                        // Also remove circle
-                                        Circle circle = circles.get(markerPos);
-                                        if (circle != null) {
-                                            circle.remove();
-                                            circles.remove(markerPos);
-                                        }
-                                    }
-                                })
-                                .setNegativeButton(android.R.string.no, null)
-                                .setIcon(android.R.drawable.ic_dialog_alert)
-                                .show();
-                        return; // Found the matching geofence, no need to continue
-                    }
-                }
-            }
-        });
-
-        return true;
-    }
-
     // Create a PendingIntent for the GeofenceBroadcastReceiver
     private PendingIntent createGeofencingPendingIntent() {
         Intent intent = new Intent(getActivity(), GeofenceBroadcastReceiver.class);
@@ -388,7 +355,7 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback, 
 
     // Method to create a geofence
     private void setupGeofence(double latitude, double longitude) {
-        float geofenceRadius = 150; // Geofence radius in METERS
+        //float geofenceRadius = 150; // Geofence radius in METERS
 
         // check if geofence already exists
         if (geofenceExists(latitude, longitude)) {
@@ -430,7 +397,7 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback, 
             // Draw circle around the geofence
             Circle circle = googleMap.addCircle(new CircleOptions()
                     .center(new LatLng(latitude, longitude))
-                    .radius(150)
+                    .radius(geofenceRadius) // draw the geofence with the radius specified
                     .strokeColor(Color.RED)
                     .fillColor(0x220000FF)
                     .strokeWidth(5));
@@ -464,16 +431,44 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback, 
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(childLatLng, 16));
 
             // Manually checking distance with the geofence's center
-            LatLng geofenceCenter = new LatLng(geofenceLat, geofenceLong);  // Replace these with your geofence's latitude and longitude
+            LatLng geofenceCenter = new LatLng(geofenceLat, geofenceLong);
             double distanceToGeofence = SphericalUtil.computeDistanceBetween(childLatLng, geofenceCenter);
 
             if (distanceToGeofence <= geofenceRadius) {
-                // Child is within the geofence
-                // Perform your actions here (e.g., send notifications, etc.)
-            } else {
-                // Child is outside the geofence
-                // Perform your actions here (e.g., send notifications, etc.)
+                // child is now inside geofence, but isChildInGeofence says they previously weren't
+                if (!isChildInGeofence) {
+                    // Child just entered the geofence
+                    showNotification("Mini-Minder Geofence", "Child has entered the geofence.");
+                    isChildInGeofence = true; // update status
+                }
+            } else { // child is now outside geofence but isChildInGeofence says they previously were
+                if (isChildInGeofence) {
+                    // Child just exited the geofence
+                    showNotification("Mini-Minder Geofence", "Child has left the geofence.");
+                    isChildInGeofence = false; // update status
+                }
             }
         }
     }
+
+    // Method for simulation to display notification for geofence transition (enter/exit)
+    private void showNotification(String title, String content) {
+        NotificationManager notificationManager =
+                (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+
+        NotificationChannel channel = new NotificationChannel("200",
+                "Mini-Minder Geofence",
+                NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setDescription("Geofence triggered");
+        notificationManager.createNotificationChannel(channel);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getActivity(), "200")
+                .setSmallIcon(R.drawable.ic_notification) // notification icon
+                .setContentTitle(title) // title for notification
+                .setContentText(content)// message for notification
+                .setAutoCancel(true); // clear notification after click
+
+        notificationManager.notify(0, builder.build());
+    }
+
 }
