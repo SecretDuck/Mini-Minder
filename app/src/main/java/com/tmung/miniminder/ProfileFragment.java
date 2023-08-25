@@ -45,27 +45,22 @@ public class ProfileFragment extends Fragment {
 
         // Find the sub-elements within the profile layout
         LinearLayout viewLinkedAccounts = profileLayout.findViewById(R.id.viewLinkedAccounts);
-        LinearLayout linkNewAccount = profileLayout.findViewById(R.id.linkNewAccount);
-        LinearLayout manageChildrensProf = profileLayout.findViewById(R.id.manageChildrensProf);
+        LinearLayout removeLink = profileLayout.findViewById(R.id.manageChildrensProf);
         LinearLayout profileLogout = profileLayout.findViewById(R.id.profile_logout);
 
         // Set onClickListeners for the buttons below
         viewLinkedAccounts.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(requireActivity(), "Will show linked accounts", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(requireActivity(), "Will show linked accounts", Toast.LENGTH_SHORT).show();
+                Intent i = new Intent(getActivity(), LinkedAccountsActivity.class);
+                startActivity(i);
             }
         });
-        linkNewAccount.setOnClickListener(new View.OnClickListener() {
+        removeLink.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(requireActivity(), "Will show linked accounts", Toast.LENGTH_SHORT).show();
-            }
-        });
-        manageChildrensProf.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(requireActivity(), "Will show linked accounts", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireActivity(), "Please go to 'View linked accounts' and click user to unlink", Toast.LENGTH_LONG).show();
             }
         });
         // Method to log user out of app

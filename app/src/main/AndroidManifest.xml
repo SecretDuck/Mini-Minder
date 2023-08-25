@@ -21,6 +21,9 @@
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.MiniMinder">
         <activity
+            android:name=".LinkedAccountsActivity"
+            android:exported="false" />
+        <activity
             android:name=".RegisterActivity"
             android:exported="false" />
         <activity
@@ -40,14 +43,12 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.MiniMinder">
-        </activity>
+            android:theme="@style/Theme.MiniMinder"></activity>
 
         <receiver
             android:name=".GeofenceBroadcastReceiver"
             android:enabled="true"
             android:exported="true" />
-
     </application>
 
 </manifest>

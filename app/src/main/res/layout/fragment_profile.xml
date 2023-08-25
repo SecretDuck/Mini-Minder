@@ -77,29 +77,6 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/linkNewAccount"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/bg_profile_item"
-                    android:orientation="horizontal"
-                    android:padding="8dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_margin="8dp"
-                        android:src="@drawable/ic_acc_add" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:padding="8dp"
-                        android:text="Link new account" />
-                </LinearLayout>
-
-                <LinearLayout
                     android:id="@+id/manageChildrensProf"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
