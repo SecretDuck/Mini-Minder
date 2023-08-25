@@ -1,5 +1,6 @@
 package com.tmung.miniminder;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,10 +14,13 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 public class ProfileFragment extends Fragment {
 
     // LinearLayout variable for the profile layout
     private LinearLayout profileLayout;
+    private FirebaseAuth firebaseAuth;
 
     // Inflate the layout for this fragment
     @Nullable
@@ -64,10 +68,18 @@ public class ProfileFragment extends Fragment {
                 Toast.makeText(requireActivity(), "Will show linked accounts", Toast.LENGTH_SHORT).show();
             }
         });
+        // Method to log user out of app
         profileLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(requireActivity(), "Will log out", Toast.LENGTH_SHORT).show();
+                firebaseAuth = FirebaseAuth.getInstance();
+                firebaseAuth.signOut();
+
+                // After logging out, navigate back to the LoginActivity
+                if (getActivity() != null) { // make sure fragment is attached to an activity
+                    startActivity(new Intent(getActivity(), LoginActivity.class));
+                    getActivity().finish();
+                }
             }
         });
     }
