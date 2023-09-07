@@ -1,9 +1,12 @@
 package com.tmung.miniminder;
 
+import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -34,10 +37,15 @@ public class LinkedAccountsActivity extends AppCompatActivity {
         // Show the linked accounts
         showLinkedAccounts();
     }
+
+    // method to show the  linked accounts
     private void showLinkedAccounts() {
+
         String parentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        // get reference in Firebase to the user's linked accounts
         DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("users").child(parentUserId).child("linkedAccounts");
 
+        // add event listener for the accounts
         dbRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -46,20 +54,25 @@ public class LinkedAccountsActivity extends AppCompatActivity {
                     String accountID = childSnapshot.getKey();
                     linkedAccountIDs.add(accountID);
                 }
+                // get the emails and display them
                 fetchEmailsAndUpdateListView(linkedAccountIDs);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                // Handle error
+                // handle error
+                Log.e(TAG, "Database error: " + databaseError.getMessage());
+                Toast.makeText(getApplicationContext(), "Failed to load linked accounts.", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
+    // method to fetch the linked accounts' emails and display them
     private void fetchEmailsAndUpdateListView(ArrayList<String> linkedAccountIds) {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
         for (String linkedAccountId : linkedAccountIds) {
+            // use the reference to add event listener
             usersRef.child(linkedAccountId).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -74,14 +87,19 @@ public class LinkedAccountsActivity extends AppCompatActivity {
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-                    // Handle error here
+                    // Handle error
+                    Log.e(TAG, "Database error: " + error.getMessage());
+                    Toast.makeText(getApplicationContext(), "Error fetching linked emails.", Toast.LENGTH_SHORT).show();
+
                 }
             });
         }
     }
 
+    // method to update the listview with the linked ids
     private void updateListView(List<String> linkedChildIds) {
         ListView listView = findViewById(R.id.listView_linkedAccounts);
+        // declare adapter
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, linkedChildIds);
         listView.setAdapter(adapter);
 
@@ -99,6 +117,7 @@ public class LinkedAccountsActivity extends AppCompatActivity {
         });
     }
 
+    // method to unlink account from parent's account
     private void unlinkChildAccount(final String childId) {
         final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("users");
         final String parentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -109,6 +128,7 @@ public class LinkedAccountsActivity extends AppCompatActivity {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if (task.isSuccessful()) {
+
                     // Delete link from child's linkedAccounts
                     ref.child(childId).child("linkedAccounts").child(parentUserId)
                             .removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {

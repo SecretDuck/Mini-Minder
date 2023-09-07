@@ -18,7 +18,7 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class ProfileFragment extends Fragment {
 
-    // LinearLayout variable for the profile layout
+    // class-level variable declarations
     private LinearLayout profileLayout;
     private FirebaseAuth firebaseAuth;
 
@@ -71,7 +71,7 @@ public class ProfileFragment extends Fragment {
                 firebaseAuth.signOut();
 
                 // After logging out, navigate back to the LoginActivity
-                if (getActivity() != null) { // make sure fragment is attached to an activity
+                if (getActivity() != null) { // first make sure fragment is attached to an activity
                     startActivity(new Intent(getActivity(), LoginActivity.class));
                     getActivity().finish();
                 }

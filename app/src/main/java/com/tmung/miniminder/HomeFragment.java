@@ -63,10 +63,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
 public class HomeFragment extends Fragment implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
-    // TODO: incorporate ViewModel to separate the UI and activity/fragment
-    // TODO: ADD OPTION TO SPECIFY GEOFENCE SIZE, EITHER UPON LONG-PRESSING SCREEN, OR AS OPTION IN NAV DRAWER
-    // TODO: FIX DEPRECATED CODE WITH LINES THROUGH IT (COULD FALSELY IMPLY THAT A.I WAS USED)
-    // TODO: GIVE GEOFENCES NAMES AND ICONS
     // Declare class-level variables
     private LinearLayout bottomSheetLayout;
     private BottomSheetBehavior sheetBehavior;
@@ -125,9 +121,11 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         header_arrow_image.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // if collapsed, expand the sheet
                 if (sheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
                     sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                } else {
+                }
+                else { // else, collapse it
                     sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 }
             }
@@ -163,12 +161,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
 
                         // Draw circle around each geofence
                         for (LocationData geofence : geofenceLocations) {
-                            // Add a marker at the centre of each geofence, and store it in 'markers'
-                            /*Marker marker = googleMap.addMarker(new MarkerOptions()
-                                    .position(new LatLng(geofence.getLatitude(), geofence.getLongitude()))
-                                    .title("Geofence Location"));
-                            markers.add(marker);
-                             */
 
                             // Draw a circle around each geofence
                             Circle circle = googleMap.addCircle(new CircleOptions()
@@ -189,7 +181,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                             // Animate camera smoothly
                             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(targetLoc, 14.0f));
                         }
-                        // Close the bottom sheet
+                        // Close the bottom sheet afterwards
                         sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     }
                 });
@@ -202,16 +194,18 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
             public void onClick(View v) {
                 // create an EditText to input the radius
                 final EditText input = new EditText(getActivity());
+
                 // Set input type to numbers
                 input.setInputType(InputType.TYPE_CLASS_NUMBER);
                 input.setHint("Enter radius in meters");
 
-                // create AlertDialog
+                // create AlertDialog to ask user to enter desired geofence radius
                 new AlertDialog.Builder(getActivity())
                         .setTitle("Set Geofence Radius")
                         .setMessage("Enter your desired geofence radius:")
                         .setView(input)  // embed the EditText into the AlertDialog
                         .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
                             public void onClick(DialogInterface dialog, int whichButton) {
                                 // retrieve the radius entered
                                 String radiusString = input.getText().toString();
@@ -233,6 +227,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
             }
         });
 
+        // method to run when 'simulate child' button clicked
         simulateChild.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -264,24 +259,23 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         super.onDestroyView();
     }
 
+    // when map is ready, this will execute
     @Override
     public void onMapReady(@NonNull GoogleMap map) {
         googleMap = map;
 
         // Start listening for child's location updates from Firebase Realtime Database
         listenForChildLocationUpdates();
-        //googleMap.setOnMarkerClickListener(this);
 
         // method to delete geofences
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(@NonNull LatLng latLng) {
-                fetchExistingGeofences(new GeofenceFetcher() {
+                fetchExistingGeofences(new GeofenceFetcher() { // get all stored geofences
                     @Override
                     public void onFetched(List<LocationData> geofenceLocations) {
                         for (LocationData geofence : geofenceLocations) {
-                            //if (geofenceExists(latLng.latitude, latLng.longitude)) {
-                            // for each fetched geofence, check if its radius
+                            // for each fetched geofence, compute distance between its center and clicked point
                             LatLng geofenceCenter = new LatLng(geofence.getLatitude(), geofence.getLongitude());
                             double distance = SphericalUtil.computeDistanceBetween(geofenceCenter, latLng);
 
@@ -342,12 +336,15 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         geofenceRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                // list to store the incoming geofences
                 List<LocationData> geofenceLocations = new ArrayList<>();
+
                 for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
                     LocationData locationData = postSnapshot.getValue(LocationData.class);
                     if (locationData != null) {
                         // set the key
                         locationData.setId(postSnapshot.getKey());
+                        // add each geofence to list
                         geofenceLocations.add(locationData);
                     }
                 }
@@ -475,7 +472,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         });
     }
 
-    // TODO: EXPLAIN THIS
+    // method to decrypt a given cipherText using a given AES SecretKey.
+
     public static Pair<Double, Double> decrypt(String cipherText, SecretKey aesKey) throws Exception {
         byte[] ivAndCiphertext = Base64.getDecoder().decode(cipherText);
 
@@ -490,12 +488,15 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         Log.d("DECRYPTION_LOG", "IV (Base64): " + Base64.getEncoder().encodeToString(iv));
         Log.d("DECRYPTION_LOG", "AES Key: " + Base64.getEncoder().encodeToString(aesKey.getEncoded()));
 
+        // initialise cipher for decryption
         Cipher cipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7);
         cipher.init(Cipher.DECRYPT_MODE, aesKey, new IvParameterSpec(iv));
         byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
 
         // Parse the decrypted string back to doubles
         String[] latLon = new String(decryptedBytes, StandardCharsets.UTF_8).split(",");
+
+        // return Pair of Doubles
         return new Pair<>(Double.parseDouble(latLon[0]), Double.parseDouble(latLon[1]));
     }
 
@@ -521,6 +522,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                 .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
                 .build();
 
+        // check location permissions first
         if (ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)
@@ -540,10 +542,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                         }
                     });
 
-            //childMarker = googleMap.addMarker(new MarkerOptions()
-                    //.position(new LatLng(latitude, longitude))
-                    //.icon(childIcon)
-                    //.title("Child's Location"));
+
             Circle circle = googleMap.addCircle(new CircleOptions()
                     .center(new LatLng(latitude, longitude))
                     .radius(geofenceRadius)
@@ -554,28 +553,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
         } else {
             Toast.makeText(requireActivity(), "Permissions not given", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    // Setup geofence at child's current loc from Firebase
-    private void setupGeofenceChildCurrLoc() {
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("encryptedLocation");
-        databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Double latitude = snapshot.child("lat").getValue(Double.class);
-                Double longitude = snapshot.child("long").getValue(Double.class);
-
-                if (latitude != null && longitude != null) {
-                    setupGeofence(latitude, longitude);
-                } else {
-                    Toast.makeText(getActivity(),"Child's current location not found in database", Toast.LENGTH_SHORT).show();
-                }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(getActivity(), "Error while reading database", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     // update the map with the child's location

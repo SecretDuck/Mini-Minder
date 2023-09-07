@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.widget.CompoundButton;
@@ -71,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         // Initialise Firebase, and ViewModel below that
         firebaseAuth = FirebaseAuth.getInstance();
-
+        // initialise shared view model
         sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
 
         // Set up the toolbar
@@ -146,17 +147,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                     } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
                         e.printStackTrace();
-                        // Handle the exception as needed
                     }
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                // Handle errors if needed
+                // handle error
+                Log.e("DatabaseError", "Error: " + databaseError.getMessage());
             }
         };
-
+        // add the event listener
         childPublicKeyRef.addValueEventListener(childPublicKeyEventListener);
     } // End onCreate here
 

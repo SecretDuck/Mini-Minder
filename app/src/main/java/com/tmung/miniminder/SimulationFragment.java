@@ -58,6 +58,8 @@ import java.util.List;
 import java.util.Map;
 
 public class SimulationFragment extends Fragment implements OnMapReadyCallback {
+
+    // declare class-level variables
     private LinearLayout bottomSheetLayout;
     private BottomSheetBehavior sheetBehavior;
     private ImageView header_arrow_image;
@@ -270,7 +272,6 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback {
                                 setupGeofence(latLng.latitude, latLng.longitude);
                                 geofenceLat = latLng.latitude;
                                 geofenceLong = latLng.longitude;
-                                //geofenceRadius = 110;
                             }
                         })
                         .setNegativeButton(android.R.string.cancel, null)
@@ -355,7 +356,6 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback {
 
     // Method to create a geofence
     private void setupGeofence(double latitude, double longitude) {
-        //float geofenceRadius = 150; // Geofence radius in METERS
 
         // check if geofence already exists
         if (geofenceExists(latitude, longitude)) {
@@ -375,6 +375,7 @@ public class SimulationFragment extends Fragment implements OnMapReadyCallback {
                 .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
                 .build();
 
+        // ask for location permissions first
         if (ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)

@@ -20,21 +20,29 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+// class for handling key exchange between parent and child apps
 public class ParentsKeyExchange {
-    private KeyPair keyPair; // Add this line
-    private PublicKey childPublicKey; // Child's public key received from the child's app
+    // class-level variables
+    private KeyPair keyPair;
+    // Child's public key received from the child's app
+    private PublicKey childPublicKey;
 
+    // method to generate key pair for the parent
     public KeyPair generateKeyPair() {
         try {
+            // initialise KeyPairGenerator with Diffie-Hellman algorithm
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DH");
-            keyPairGenerator.initialize(2048); // Adjust the key size as needed
-            keyPair = keyPairGenerator.generateKeyPair();
+            // set key size to 2048 bits
+            keyPairGenerator.initialize(2048);
+            keyPair = keyPairGenerator.generateKeyPair(); // generate key pair
 
+            // get the public key to be sent to Firebase
             PublicKey publicKey = keyPair.getPublic();
-            // Send the public key to the child's app
+            // will send the public key string to the child's app
             String publicKeyString = Base64.getEncoder().encodeToString(publicKey.getEncoded());
-            // ... send publicKeyString to the child's app ...
 
             return keyPair;
         } catch (Exception e) {
@@ -44,7 +52,8 @@ public class ParentsKeyExchange {
         }
     }
 
-    public SecretKey deriveAESKey(byte[] sharedSecret, byte[] salt, int keyLength) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeySpecException {
+    // method to derive AES key using PBKDF2 and HMAC-SHA256
+    public SecretKey deriveAESKey(byte[] sharedSecret, byte[] salt, int keyLength) throws NoSuchAlgorithmException, InvalidKeySpecException {
         PBEKeySpec spec = new PBEKeySpec(Base64.getEncoder().encodeToString(sharedSecret).toCharArray(), salt, 65536, keyLength);
         SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
         byte[] keyBytes = skf.generateSecret(spec).getEncoded();
@@ -52,25 +61,7 @@ public class ParentsKeyExchange {
         return key;
     }
 
-    // Method to get the private key parameters
-    public DHPrivateKeyParameters getPrivateKeyParams() {
-        try {
-            KeyFactory keyFactory = KeyFactory.getInstance("DH");
-            DHPrivateKeySpec privateKeySpec = keyFactory.getKeySpec(keyPair.getPrivate(), DHPrivateKeySpec.class);
-            DHPublicKeySpec publicKeySpec = keyFactory.getKeySpec(keyPair.getPublic(), DHPublicKeySpec.class);
-            DHParameters dhParams = new DHParameters(publicKeySpec.getP(), publicKeySpec.getG());
-
-            BigInteger privateKeyX = privateKeySpec.getX();
-            return new DHPrivateKeyParameters(privateKeyX, dhParams);
-        } catch (Exception e) {
-            e.printStackTrace();
-            // Handle the exception as needed
-            return null;
-        }
-    }
-
-
-
+    // method to set the child's public key received from Firebase
     public void setChildPublicKey(String publicKeyString) {
         try {
             byte[] publicKeyBytes = Base64.getDecoder().decode(publicKeyString);
@@ -81,6 +72,7 @@ public class ParentsKeyExchange {
         }
     }
 
+    // method to calculate the shared secret using private key and received public key
     public byte[] calculateSharedSecret() {
         try {
             KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
@@ -89,11 +81,10 @@ public class ParentsKeyExchange {
             return keyAgreement.generateSecret();
         } catch (Exception e) {
             e.printStackTrace();
-            // Handle the exception as needed
+            // handle exception
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Error calculating shared secret", e);
             return null;
         }
     }
 
-    // Use the shared secret to derive the encryption key (e.g., AES key) for secure communication
-    // ... derive the encryption key ...
 }

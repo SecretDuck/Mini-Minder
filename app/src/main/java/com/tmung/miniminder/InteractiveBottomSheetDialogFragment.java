@@ -15,12 +15,13 @@ public class InteractiveBottomSheetDialogFragment extends BottomSheetDialogFragm
         return new InteractiveBottomSheetDialogFragment();
     }
 
+    // class for the sliding bottom sheet
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_bottom_sheet, container, false);
 
-        // Set up views here
+        // only inflation necessary
 
         return view;
     }

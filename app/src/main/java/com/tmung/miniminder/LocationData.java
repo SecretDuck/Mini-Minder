@@ -9,12 +9,14 @@ public class LocationData {
     // Needed for Firebase's automatic data mapping
     public LocationData() { }
 
+    // POJO to hold location data
     public LocationData(double latitude, double longitude, float radius) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.radius  = radius;
     }
 
+    // getters and setters below
     public double getLatitude() {
         return latitude;
     }
